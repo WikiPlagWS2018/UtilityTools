@@ -21,8 +21,11 @@ public class App {
         try {
             inputStream = new FileInputStream(filename);
             sc = new Scanner(inputStream, "UTF-8");
+
             String[] header = sc.nextLine().split(";");
+
             while (sc.hasNextLine()) {
+
                 String[] line = sc.nextLine().split(";");
                 for (int i = 1; i < header.length; i++) {
                     Pair p = new Pair(
@@ -47,6 +50,10 @@ public class App {
                 sc.close();
             }
         }
+
+//        input von rene: userngram | potngram | kosinus | jaccard
+
+//        output: userngram | potngram | kosinus | jaccard | label
 
         labelList.forEach(System.out::println);
     }
