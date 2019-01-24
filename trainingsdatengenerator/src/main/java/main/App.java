@@ -1,6 +1,8 @@
 package main;
 
+import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -15,40 +17,33 @@ public class App {
     public static List<Pair> labelList = new ArrayList<>();
 
     public static void main(String[] args) throws IOException {
-        String filename = "label.csv";
-        FileInputStream inputStream = null;
-        Scanner sc = null;
-        try {
-            inputStream = new FileInputStream(filename);
-            sc = new Scanner(inputStream, "UTF-8");
+        String tableFile = "label.csv";
+        String processedFile = tableFile;
 
-            String[] header = sc.nextLine().split(";");
 
-            while (sc.hasNextLine()) {
+        Scanner sc = getScanner(tableFile);
+        String[] header = sc.nextLine().split(";");
 
-                String[] line = sc.nextLine().split(";");
-                for (int i = 1; i < header.length; i++) {
-                    Pair p = new Pair(
-                            Cleaner.cleanString(header[i]),
-                            Cleaner.cleanString(line[0]),
-                            Integer.parseInt(line[i])
-                    );
-                    labelList.add(p);
-                }
+        while (sc.hasNextLine()) {
+            String[] line = sc.nextLine().split(";");
+            for (int i = 1; i < header.length; i++) {
+                Pair p = new Pair(
+                        Cleaner.cleanString(header[i]),
+                        Cleaner.cleanString(line[0]),
+                        Integer.parseInt(line[i])
+                );
+                labelList.add(p);
             }
-            // note that Scanner suppresses exceptions
-            if (sc.ioException() != null) {
-                throw sc.ioException();
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        } finally {
-            if (inputStream != null) {
-                inputStream.close();
-            }
-            if (sc != null) {
-                sc.close();
-            }
+        }
+        sc.close();
+
+        sc = getScanner(processedFile);
+        while (sc.hasNextLine()) {
+            String[] lineArr = sc.nextLine().split(";");
+            String userngram = lineArr[0];
+            String potngram = lineArr[1];
+            Double kosinus = Double.parseDouble(lineArr[2]);
+            Double jaccard = Double.parseDouble(lineArr[3]);
         }
 
 //        input von rene: userngram | potngram | kosinus | jaccard
@@ -57,4 +52,16 @@ public class App {
 
         labelList.forEach(System.out::println);
     }
+
+    public static Scanner getScanner(String file) {
+        try {
+            Scanner scanner = new Scanner(new File(file), "UTF-8");
+            return scanner;
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+
 }

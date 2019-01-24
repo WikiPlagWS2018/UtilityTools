@@ -10,6 +10,8 @@ public class Pair {
     private String wikiText;
     private int label;
     private int hash;
+    private double cosinus;
+    private double jaccard;
 
     public Pair(String exampleText, String wikiText, int label) {
         this.exampleText = exampleText.toLowerCase();
@@ -38,6 +40,22 @@ public class Pair {
 
     public int getHash() {
         return hash;
+    }
+
+    public double getCosinus() {
+        return cosinus;
+    }
+
+    public void setCosinus(double cosinus) {
+        this.cosinus = cosinus;
+    }
+
+    public double getJaccard() {
+        return jaccard;
+    }
+
+    public void setJaccard(double jaccard) {
+        this.jaccard = jaccard;
     }
 
     @Override
