@@ -1,9 +1,6 @@
 package main;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
@@ -14,54 +11,85 @@ import java.util.Scanner;
  * Package: main
  */
 public class App {
-    public static List<Pair> labelList = new ArrayList<>();
+    private static List<Pair> labelList = new ArrayList<>();
+    private static String outputFile;
+    private static String tableFile;
+    private static String processedFile;
 
     public static void main(String[] args) throws IOException {
-        String tableFile = "label.csv";
-        String processedFile = tableFile;
+
+        tableFile = "label.csv";
+        processedFile = "output.txt";
+        outputFile = "output.txt";
+
+//        tableFile = args[0];
+//        processedFile = args[1];
+//        outputFile = args[2];
 
 
         Scanner sc = getScanner(tableFile);
-        String[] header = sc.nextLine().split(";");
+        if (sc != null) {
+            String[] header = sc.nextLine().split(";");
 
-        while (sc.hasNextLine()) {
-            String[] line = sc.nextLine().split(";");
-            for (int i = 1; i < header.length; i++) {
-                Pair p = new Pair(
-                        Cleaner.cleanString(header[i]),
-                        Cleaner.cleanString(line[0]),
-                        Integer.parseInt(line[i])
-                );
-                labelList.add(p);
+            while (sc.hasNextLine()) {
+                String[] line = sc.nextLine().split(";");
+                for (int i = 1; i < header.length; i++) {
+                    Pair p = new Pair(
+                            Cleaner.cleanString(header[i]),
+                            Cleaner.cleanString(line[0]),
+                            Integer.parseInt(line[i])
+                    );
+                    labelList.add(p);
+                }
             }
-        }
-        sc.close();
+            sc.close();
+        } else System.out.println("File not found: " + tableFile);
+
 
         sc = getScanner(processedFile);
-        while (sc.hasNextLine()) {
-            String[] lineArr = sc.nextLine().split(";");
-            String userngram = lineArr[0];
-            String potngram = lineArr[1];
-            Double kosinus = Double.parseDouble(lineArr[2]);
-            Double jaccard = Double.parseDouble(lineArr[3]);
-        }
+        if (sc != null) {
+            while (sc.hasNextLine()) {
+                String[] lineArr = sc.nextLine().split(";");
+                String userngram = lineArr[0];
+                String potngram = lineArr[1];
+                Double kosinus = Double.parseDouble(lineArr[2]);
+                Double jaccard = Double.parseDouble(lineArr[3]);
+                Pair p = new Pair(userngram, potngram);
+                p.setCosinus(kosinus);
+                p.setJaccard(jaccard);
+
+                labelList.forEach(t -> {
+                    if (p.getHash() == t.getHash()) {
+                        writeOutput(p.getExampleText() + " " + p.getWikiText() + " " + p.getCosinus() + " " + p.getJaccard() + " " + t.getLabel());
+                    }
+                });
+
+            }
+            sc.close();
+        } else System.out.println("File not found: " + processedFile);
 
 //        input von rene: userngram | potngram | kosinus | jaccard
 
 //        output: userngram | potngram | kosinus | jaccard | label
-
-        labelList.forEach(System.out::println);
     }
 
     public static Scanner getScanner(String file) {
         try {
             Scanner scanner = new Scanner(new File(file), "UTF-8");
             return scanner;
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        }
+        } catch (FileNotFoundException e) {}
         return null;
     }
+
+    public static void writeOutput(String out) {
+        try(Writer output = new BufferedWriter(new FileWriter(outputFile))) {
+            output.append(out);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+//    userngram | potngram | kosinus | jaccard
 
 
 }
