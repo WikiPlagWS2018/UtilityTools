@@ -14,26 +14,26 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class App {
     private static List<Pair> labelList = new ArrayList<>();
     private static String outputFile;
-    private static String tableFile;
-    private static String processedFile;
+    private static String humanInput;
+    private static String cosineJaccardSimTable;
 
     public static void main(String[] args) throws IOException {
         if (args.length != 3) {
             System.out.println("Usage:\n" +
-                    "java -jar trainingsdatengenerator.jar <labelFile> <processedFile> <outputFile>");
+                    "java -jar trainingsdatengenerator.jar <labelFile> <cosineJaccardSimTable> <outputFile>");
             System.exit(0);
         }
         Long start = System.currentTimeMillis();
 //        A CSV-file containing user validated plag's
-        tableFile = args[0];
+        humanInput = args[0];
 //        A CSV-file containing the 13-Grams from the first file with their cosinus and jaccard similarity
 //        userngram;potngram;kosinus;jaccard
-        processedFile = args[1];
+        cosineJaccardSimTable = args[1];
 //        label 1:<cosinus> 2:<jaccard>
         outputFile = args[2];
 
 
-        Scanner sc = getScanner(tableFile);
+        Scanner sc = getScanner(humanInput);
         if (sc != null) {
             String[] header = sc.nextLine().split(";");
 
@@ -49,9 +49,9 @@ public class App {
                 }
             }
             sc.close();
-        } else System.out.println("File not found: " + tableFile);
+        } else System.out.println("File not found: " + humanInput);
 
-        sc = getScanner(processedFile);
+        sc = getScanner(cosineJaccardSimTable);
         if (sc != null) {
             while (sc.hasNextLine()) {
                 AtomicBoolean matchFound = new AtomicBoolean(false);
@@ -92,7 +92,7 @@ public class App {
 
             }
             sc.close();
-        } else System.out.println("File not found: " + processedFile);
+        } else System.out.println("File not found: " + cosineJaccardSimTable);
 
 
 
