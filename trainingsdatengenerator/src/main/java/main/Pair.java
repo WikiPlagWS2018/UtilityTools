@@ -29,6 +29,7 @@ public class Pair {
     public Pair(String exampleText, String wikiText) {
         this.exampleText = exampleText;
         this.wikiText = wikiText;
+        this.label = 0;
         this.hash = Util.sha256((exampleText + wikiText));
     }
 
@@ -64,13 +65,18 @@ public class Pair {
         this.jaccard = jaccard;
     }
 
+    public void setLabel(int label) {
+        this.label = label;
+    }
+
     @Override
     public String toString() {
-        return "Pair{" +
-                ", wikiText='" + wikiText + '\'' +
-                "exampleText='" + exampleText + '\'' +
-                ", label=" + label +
-                ", hash=" + hash +
-                '}';
+        return this.label + " 1:" + this.cosinus + " 2:" + this.jaccard;
+//        return "Pair{" +
+//                ", wikiText='" + wikiText + '\'' +
+//                "exampleText='" + exampleText + '\'' +
+//                ", label=" + label +
+//                ", hash=" + hash +
+//                '}';
     }
 }

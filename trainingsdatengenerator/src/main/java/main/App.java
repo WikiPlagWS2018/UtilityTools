@@ -1,5 +1,9 @@
 package main;
 
+import me.tongfei.progressbar.ProgressBar;
+import me.tongfei.progressbar.ProgressBarBuilder;
+import me.tongfei.progressbar.ProgressBarStyle;
+
 import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -23,6 +27,7 @@ public class App {
                     "java -jar trainingsdatengenerator.jar <labelFile> <cosineJaccardSimTable> <outputFile>");
             System.exit(0);
         }
+
         Long start = System.currentTimeMillis();
 //        A CSV-file containing user validated plag's
         humanInput = args[0];
@@ -33,67 +38,80 @@ public class App {
         outputFile = args[2];
 
 
-        Scanner sc = getScanner(humanInput);
-        if (sc != null) {
-            String[] header = sc.nextLine().split(";");
+        try (ProgressBar progressBar = new ProgressBarBuilder()
+                .setInitialMax(countLines(humanInput) - 1)
+                .setStyle(ProgressBarStyle.COLORFUL_UNICODE_BLOCK)
+                .setTaskName("Processing " + humanInput)
+                .setUnit(" lines", 1)
+                .setUpdateIntervalMillis(1000)
+                .showSpeed().build()) {
+            Scanner sc = getScanner(humanInput);
+            if (sc != null) {
+                String[] header = sc.nextLine().split(";");
 
-            while (sc.hasNextLine()) {
-                String[] line = sc.nextLine().split(";");
-                for (int i = 0; i < header.length; i++) {
-                    Pair p = new Pair(
-                            Util.cleanString(header[i]),
-                            Util.cleanString(line[0]),
-                            Integer.parseInt(line[i + 1])
-                    );
-                    labelList.add(p);
-                }
-            }
-            sc.close();
-        } else System.out.println("File not found: " + humanInput);
-
-        sc = getScanner(cosineJaccardSimTable);
-        if (sc != null) {
-            while (sc.hasNextLine()) {
-                AtomicBoolean matchFound = new AtomicBoolean(false);
-                try {
-                    String line = sc.nextLine();
-                    String[] lineArr = line.split(";");
-                    String userngram = Util.cleanString(lineArr[0]);
-                    String potngram = Util.cleanString(lineArr[1]);
-                    Double kosinus = Double.parseDouble(lineArr[2]);
-                    Double jaccard = Double.parseDouble(lineArr[3]);
-                    Pair p = new Pair(userngram, potngram);
-                    p.setCosinus(kosinus);
-                    p.setJaccard(jaccard);
-
-                    labelList.parallelStream()
-                            .forEach(t -> {
-                                if (p.getHash().equals(t.getHash())) {
-                                    System.out.println(t);
-                                    System.out.println(p);
-                                    System.out.println();
-                                    System.out.println(p);
-                                    System.out.println(t);
-                                    System.out.println("Match found!");
-                                    matchFound.set(true);
-                                    writeOutput(t.getLabel() + " 1:" + p.getCosinus() + " 2:" + p.getJaccard());
-                                }
-                            });
-                    if (!matchFound.get()) {
-                        writeOutput("0 1:" + p.getCosinus() + " 2:" + p.getJaccard());
+                while (sc.hasNextLine()) {
+                    String[] line = sc.nextLine().split(";");
+                    for (int i = 0; i < header.length; i++) {
+                        Pair p = new Pair(
+                                Util.cleanString(header[i]),
+                                Util.cleanString(line[0]),
+                                Integer.parseInt(line[i + 1])
+                        );
+                        labelList.add(p);
                     }
-
-                } catch (ArrayIndexOutOfBoundsException e) {
-                    Long stop = System.currentTimeMillis();
-
-                    Long deltaTime = stop - start;
-                    System.out.println("Needed " + deltaTime / 1000 / 60 + " minutes.");
+                    progressBar.step();
                 }
+                sc.close();
+            } else System.out.println("File not found: " + humanInput);
+        }
 
-            }
-            sc.close();
-        } else System.out.println("File not found: " + cosineJaccardSimTable);
 
+        try (ProgressBar progressBar = new ProgressBarBuilder()
+                .setInitialMax(countLines(cosineJaccardSimTable) - 1)
+                .setStyle(ProgressBarStyle.COLORFUL_UNICODE_BLOCK)
+                .setTaskName("Processing " + cosineJaccardSimTable)
+                .setUnit(" lines", 1)
+                .setUpdateIntervalMillis(1000)
+                .showSpeed().build()) {
+            Scanner sc = getScanner(cosineJaccardSimTable);
+            if (sc != null) {
+                while (sc.hasNextLine()) {
+                    AtomicBoolean matchFound = new AtomicBoolean(false);
+                    try {
+                        String line = sc.nextLine();
+                        String[] lineArr = line.split(";");
+                        String userngram = Util.cleanString(lineArr[0]);
+                        String potngram = Util.cleanString(lineArr[1]);
+                        Double kosinus = Double.parseDouble(lineArr[2]);
+                        Double jaccard = Double.parseDouble(lineArr[3]);
+
+                        Pair p = new Pair(userngram, potngram);
+                        p.setCosinus(kosinus);
+                        p.setJaccard(jaccard);
+
+                        labelList.stream()
+                                .forEach(t -> {
+                                    if (p.getHash().equals(t.getHash())) {
+                                        matchFound.set(true);
+                                        p.setLabel(t.getLabel());
+                                        writeOutput(p.toString());
+                                    }
+                                });
+                        if (!matchFound.get()) {
+                            writeOutput(p.toString());
+                        }
+
+                    } catch (ArrayIndexOutOfBoundsException e) {
+                        Long stop = System.currentTimeMillis();
+
+                        Long deltaTime = stop - start;
+                        System.out.println("Needed " + deltaTime / 1000 / 60 + " minutes.");
+                    }
+                    progressBar.step();
+                }
+                sc.close();
+            } else System.out.println("File not found: " + cosineJaccardSimTable);
+        }
 
 
         Long stop = System.currentTimeMillis();
@@ -117,7 +135,20 @@ public class App {
         }
     }
 
-
+    public static int countLines(String file) {
+        System.out.println("Counting lines of " + file);
+        BufferedReader reader = null;
+        try {
+            reader = new BufferedReader(new FileReader(file));
+            int lines = 0;
+            while (reader.readLine() != null) lines++;
+            reader.close();
+            return lines;
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return -1;
+    }
 
 
 }
