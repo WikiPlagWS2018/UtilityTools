@@ -4,6 +4,7 @@ import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Created by samuelerb on 17.01.19.
@@ -53,6 +54,7 @@ public class App {
         sc = getScanner(processedFile);
         if (sc != null) {
             while (sc.hasNextLine()) {
+                AtomicBoolean matchFound = new AtomicBoolean(false);
                 try {
                     String line = sc.nextLine();
                     String[] lineArr = line.split(";");
@@ -72,15 +74,22 @@ public class App {
                                     System.out.println();
                                     System.out.println(p);
                                     System.out.println(t);
+                                    System.out.println("Match found!");
+                                    matchFound.set(true);
                                     writeOutput(t.getLabel() + " 1:" + p.getCosinus() + " 2:" + p.getJaccard());
                                 }
                             });
+                    if (!matchFound.get()) {
+                        writeOutput("0 1:" + p.getCosinus() + " 2:" + p.getJaccard());
+                    }
+
                 } catch (ArrayIndexOutOfBoundsException e) {
                     Long stop = System.currentTimeMillis();
 
                     Long deltaTime = stop - start;
                     System.out.println("Needed " + deltaTime / 1000 / 60 + " minutes.");
                 }
+
             }
             sc.close();
         } else System.out.println("File not found: " + processedFile);
@@ -103,7 +112,6 @@ public class App {
     public static void writeOutput(String out) {
         try (Writer output = new BufferedWriter(new FileWriter(outputFile, true))) {
             output.write(out + "\n");
-            System.out.println("Match found!");
         } catch (IOException e) {
             e.printStackTrace();
         }
